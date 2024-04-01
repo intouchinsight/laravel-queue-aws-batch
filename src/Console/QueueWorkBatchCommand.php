@@ -24,34 +24,38 @@ use LukeWaite\LaravelQueueAwsBatch\Exceptions\UnsupportedException;
 use LukeWaite\LaravelQueueAwsBatch\Queues\BatchQueue;
 use Symfony\Component\Debug\Exception\FatalThrowableError;
 
-class QueueWorkBatchCommand extends WorkCommand
+class QueueWorkBatchCommand extends Command
 {
     protected $name = 'queue:work-batch';
 
     protected $description = 'Run a Job for the AWS Batch queue';
 
     protected $signature = 'queue:work-batch
+                            {connection : The name of the queue connection to work}
                             {job_id : The job id in the database}
-                            {connection? : The name of the queue connection to work}
                             {--memory=128 : The memory limit in megabytes}
                             {--timeout=60 : The number of seconds a child process can run}
-                            {--tries=0 : Number of times to attempt a job before logging it failed}';
+                            {--force : Force the worker to run even in maintenance mode}
+                            {--tries= : Number of times to attempt a job before logging it failed}';
 
 
     protected $manager;
     protected $exceptions;
+    protected $worker;
+    protected $cache;
 
     public function __construct(QueueManager $manager, Worker $worker, Handler $exceptions, Cache $cache)
     {
-        parent::__construct($worker, $cache);
+        parent::__construct();
+
         $this->manager = $manager;
+        $this->worker = $worker;
         $this->exceptions = $exceptions;
+        $this->cache = $cache;
     }
 
-    public function fire()
+    public function handle()
     {
-        $this->listenForEvents();
-
         try {
             $this->runJob();
         } catch (\Throwable $e) {
@@ -98,12 +102,10 @@ class QueueWorkBatchCommand extends WorkCommand
     protected function gatherWorkerOptions()
     {
         return new WorkerOptions(
-            0,
-            $this->option('memory'),
-            $this->option('timeout'),
-            0,
-            $this->option('tries'),
-            false
+            name: $this->argument('connection'),
+            memory: $this->option('memory'),
+            timeout: $this->option('timeout'),
+            maxTries: $this->option('tries'),
         );
     }
 }
