@@ -43,8 +43,7 @@ class BatchQueueServiceProvider extends ServiceProvider
     /**
      * Register the Batch queue connector.
      *
-     * @param \Illuminate\Queue\QueueManager $manager
-     *
+     * @param  \Illuminate\Queue\QueueManager  $manager
      * @return void
      */
     protected function registerBatchConnector($manager)

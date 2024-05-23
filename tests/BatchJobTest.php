@@ -3,12 +3,12 @@
 namespace LukeWaite\LaravelQueueAwsBatch\Tests;
 
 use LukeWaite\LaravelQueueAwsBatch\Exceptions\UnsupportedException;
-use Mockery as m;
 use Mockery\Adapter\Phpunit\MockeryTestCase as TestCase;
+use Mockery as m;
 
 class BatchJobTest extends TestCase
 {
-    public function setUp() : void
+    public function setUp(): void
     {
         $this->job = new \stdClass();
         $this->job->payload = '{"job":"foo","data":["data"]}';
@@ -22,7 +22,7 @@ class BatchJobTest extends TestCase
             $this->batchQueue = m::mock('LukeWaite\LaravelQueueAwsBatch\Queues\BatchQueue'),
             $this->job,
             'testConnection',
-            'defaultQueue'
+            'defaultQueue',
         ])->getMock();
     }
 

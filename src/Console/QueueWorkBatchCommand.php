@@ -15,14 +15,12 @@ namespace LukeWaite\LaravelQueueAwsBatch\Console;
 use Illuminate\Console\Command;
 use Illuminate\Contracts\Cache\Repository as Cache;
 use Illuminate\Foundation\Exceptions\Handler;
-use Illuminate\Queue\Console\WorkCommand;
 use Illuminate\Queue\QueueManager;
 use Illuminate\Queue\Worker;
 use Illuminate\Queue\WorkerOptions;
 use LukeWaite\LaravelQueueAwsBatch\Exceptions\JobNotFoundException;
 use LukeWaite\LaravelQueueAwsBatch\Exceptions\UnsupportedException;
 use LukeWaite\LaravelQueueAwsBatch\Queues\BatchQueue;
-use Symfony\Component\Debug\Exception\FatalThrowableError;
 
 class QueueWorkBatchCommand extends Command
 {
@@ -38,10 +36,12 @@ class QueueWorkBatchCommand extends Command
                             {--force : Force the worker to run even in maintenance mode}
                             {--tries= : Number of times to attempt a job before logging it failed}';
 
-
     protected $manager;
+
     protected $exceptions;
+
     protected $worker;
+
     protected $cache;
 
     public function __construct(QueueManager $manager, Worker $worker, Handler $exceptions, Cache $cache)
@@ -87,6 +87,7 @@ class QueueWorkBatchCommand extends Command
                 $job,
                 $this->gatherWorkerOptions()
             );
+
             return;
         }
 

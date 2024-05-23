@@ -4,12 +4,12 @@ namespace LukeWaite\LaravelQueueAwsBatch\Tests;
 
 use Carbon\Carbon;
 use LukeWaite\LaravelQueueAwsBatch\Exceptions\UnsupportedException;
-use Mockery as m;
 use Mockery\Adapter\Phpunit\MockeryTestCase as TestCase;
+use Mockery as m;
 
 class BatchQueueTest extends TestCase
 {
-    public function setUp() : void
+    public function setUp(): void
     {
         $this->queue = $this->getMockBuilder('LukeWaite\LaravelQueueAwsBatch\Queues\BatchQueue')->setMethods(null)->setConstructorArgs([
             $this->database = m::mock('Illuminate\Database\Connection'),
@@ -17,7 +17,7 @@ class BatchQueueTest extends TestCase
             'default',
             '60',
             'jobdefinition',
-            $this->batch = m::mock('Aws\Batch\BatchClient')
+            $this->batch = m::mock('Aws\Batch\BatchClient'),
         ])->getMock();
 
         $this->queue->setContainer(m::mock('Illuminate\Container\Container'));
@@ -80,7 +80,7 @@ class BatchQueueTest extends TestCase
         $queryResult->id = 1;
 
         $table->shouldReceive('where')->once()->with('id', 1)->andReturn($reserved = m::mock('StdClass'));
-        $reserved->shouldReceive('update')->with(['reserved_at'=> 1473004800, 'attempts'=> 1])->once()->andReturn($job = m::mock('StdClass'));
+        $reserved->shouldReceive('update')->with(['reserved_at' => 1473004800, 'attempts' => 1])->once()->andReturn($job = m::mock('StdClass'));
 
         $this->database->shouldReceive('commit')->once();
 
@@ -94,7 +94,7 @@ class BatchQueueTest extends TestCase
         $this->database->shouldReceive('table')->once()->with('table')->andReturn($table = m::mock('StdClass'));
         $table->shouldReceive('where')->once()->with('id', 4)->andReturn($query = m::mock('StdClass'));
         $query->shouldReceive('update')->once()->with([
-            'attempts'    => 1,
+            'attempts' => 1,
             'reserved_at' => null,
         ])->andReturn(4);
 
