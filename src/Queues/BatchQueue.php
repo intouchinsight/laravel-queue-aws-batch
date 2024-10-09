@@ -47,6 +47,7 @@ class BatchQueue extends DatabaseQueue
     public function push($job, $data = '', $queue = null)
     {
         $payload = $this->createPayload($job, $data);
+
         return $this->pushToBatch($queue, $payload, $this->getBatchDisplayName($job));
     }
 
@@ -65,7 +66,7 @@ class BatchQueue extends DatabaseQueue
     {
         if (is_object($job)) {
             return method_exists($job, 'displayName')
-                ? $job->displayName() : str_replace('\\', '_', (string)get_class($job));
+                ? $job->displayName() : str_replace('\\', '_', (string) get_class($job));
         } else {
             return is_string($job) ? explode('@', $job)[0] : null;
         }
@@ -74,10 +75,9 @@ class BatchQueue extends DatabaseQueue
     /**
      * Push a raw payload to the database, then to AWS Batch, with a given delay.
      *
-     * @param string|null $queue
-     * @param string      $payload
-     * @param string      $jobName
-     *
+     * @param  string|null  $queue
+     * @param  string  $payload
+     * @param  string  $jobName
      * @return int
      */
     protected function pushToBatch($queue, $payload, $jobName)
@@ -86,11 +86,11 @@ class BatchQueue extends DatabaseQueue
 
         $this->batch->submitJob([
             'jobDefinition' => $this->jobDefinition,
-            'jobName'       => $jobName,
-            'jobQueue'      => $this->getQueue($queue),
-            'parameters'    => [
+            'jobName' => $jobName,
+            'jobQueue' => $this->getQueue($queue),
+            'parameters' => [
                 'jobId' => $jobId,
-            ]
+            ],
         ]);
 
         return $jobId;
@@ -104,7 +104,6 @@ class BatchQueue extends DatabaseQueue
             ->lockForUpdate()
             ->where('id', $id)
             ->first();
-
 
         if (!isset($job)) {
             throw new JobNotFoundException('Could not find the job');
@@ -133,11 +132,11 @@ class BatchQueue extends DatabaseQueue
     /**
      * Release the job, without deleting first from the Queue
      *
-     * @param string $queue
-     * @param \StdClass $job
-     * @param int $delay
-     *
+     * @param  string  $queue
+     * @param  \StdClass  $job
+     * @param  int  $delay
      * @return int
+     *
      * @throws UnsupportedException
      */
     public function release($queue, $job, $delay)
@@ -147,8 +146,8 @@ class BatchQueue extends DatabaseQueue
         }
 
         return $this->database->table($this->table)->where('id', $job->id)->update([
-            'attempts'    => $job->attempts,
-            'reserved_at' => null
+            'attempts' => $job->attempts,
+            'reserved_at' => null,
         ]);
     }
 

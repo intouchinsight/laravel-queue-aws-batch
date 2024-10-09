@@ -22,7 +22,6 @@ class BatchConnector extends DatabaseConnector
     /**
      * Establish a queue connection.
      *
-     * @param array $config
      *
      * @return \Illuminate\Contracts\Queue\Queue
      */
@@ -35,7 +34,7 @@ class BatchConnector extends DatabaseConnector
             Arr::get($config, 'expire', 60),
             $config['jobDefinition'],
             new BatchClient([
-                'region'  => $config['region'],
+                'region' => $config['region'],
                 'version' => '2016-08-10',
             ])
         );
