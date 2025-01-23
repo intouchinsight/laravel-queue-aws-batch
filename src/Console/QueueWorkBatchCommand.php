@@ -15,6 +15,7 @@ namespace LukeWaite\LaravelQueueAwsBatch\Console;
 use Illuminate\Console\Command;
 use Illuminate\Contracts\Cache\Repository as Cache;
 use Illuminate\Foundation\Exceptions\Handler;
+use Illuminate\Queue\Events\JobFailed;
 use Illuminate\Queue\QueueManager;
 use Illuminate\Queue\Worker;
 use Illuminate\Queue\WorkerOptions;
@@ -56,6 +57,10 @@ class QueueWorkBatchCommand extends Command
 
     public function handle()
     {
+        $this->laravel['events']->listen(JobFailed::class, function ($event) {
+            $this->logFailedJob($event);
+        });
+
         try {
             $this->runJob();
         } catch (\Throwable $e) {
@@ -107,6 +112,22 @@ class QueueWorkBatchCommand extends Command
             memory: $this->option('memory'),
             timeout: $this->option('timeout'),
             maxTries: $this->option('tries'),
+        );
+    }
+
+    /**
+     * Store a failed job event.
+     *
+     * @param  \Illuminate\Queue\Events\JobFailed  $event
+     * @return void
+     */
+    protected function logFailedJob(JobFailed $event)
+    {
+        $this->laravel['queue.failer']->log(
+            $event->connectionName,
+            $event->job->getQueue(),
+            $event->job->getRawBody(),
+            $event->exception
         );
     }
 }
