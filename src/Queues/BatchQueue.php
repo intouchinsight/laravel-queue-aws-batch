@@ -16,6 +16,7 @@ use Aws\Batch\BatchClient;
 use Illuminate\Database\Connection;
 use Illuminate\Queue\DatabaseQueue;
 use Illuminate\Queue\Jobs\DatabaseJobRecord;
+use LukeWaite\LaravelQueueAwsBatch\Contracts\JobContainerOverrides;
 use LukeWaite\LaravelQueueAwsBatch\Exceptions\JobNotFoundException;
 use LukeWaite\LaravelQueueAwsBatch\Exceptions\UnsupportedException;
 use LukeWaite\LaravelQueueAwsBatch\Jobs\BatchJob;
@@ -76,7 +77,7 @@ class BatchQueue extends DatabaseQueue
      * Push a raw payload to the database, then to AWS Batch, with a given delay.
      *
      * @param  string|null  $queue
-     * @param  string  $payload
+     * @param  array  $payload
      * @param  string  $jobName
      * @return int
      */
@@ -84,16 +85,32 @@ class BatchQueue extends DatabaseQueue
     {
         $jobId = $this->pushToDatabase($queue, $payload);
 
-        $this->batch->submitJob([
+        $payload = [
             'jobDefinition' => $this->jobDefinition,
             'jobName' => $jobName,
             'jobQueue' => $this->getQueue($queue),
             'parameters' => [
                 'jobId' => $jobId,
-            ],
-        ]);
+            ]
+        ];
+
+        if (isset($job) && is_object($job) && $this->implementsJobContainerOverrides($job)) {
+            /** @var JobContainerOverrides $job */
+            $overrides = $job->getBatchContainerOverrides();
+
+            if (isset($overrides)) {
+                $payload['containerOverrides'] = $overrides;
+            }
+        }
+
+        $this->batch->submitJob($payload);
 
         return $jobId;
+    }
+
+    private function implementsJobContainerOverrides($job)
+    {
+        return $job instanceof JobContainerOverrides;
     }
 
     public function getJobById($id)
