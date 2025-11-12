@@ -3,6 +3,7 @@
 namespace LukeWaite\LaravelQueueAwsBatch\Tests;
 
 use Carbon\Carbon;
+use LukeWaite\LaravelQueueAwsBatch\Contracts\JobContainerOverrides;
 use LukeWaite\LaravelQueueAwsBatch\Exceptions\UnsupportedException;
 use LukeWaite\LaravelQueueAwsBatch\Queues\BatchQueue;
 use Mockery\Adapter\Phpunit\MockeryTestCase as TestCase;
@@ -76,6 +77,22 @@ class BatchQueueTest extends TestCase
         });
 
         $this->queue->push(new TestJob());
+    }
+
+    public function testPushIncludesContainerOverridesWhenJobSupportsOverrides()
+    {
+        $overrides = ['vcpus' => 2];
+
+        $this->database->shouldReceive('table')->with('table')->andReturn($query = m::mock('StdClass'));
+        $query->shouldReceive('insertGetId')->once()->andReturn(5);
+
+        $this->batch->shouldReceive('submitJob')->once()->andReturnUsing(function ($payload) use ($overrides) {
+            $this->assertArrayHasKey('containerOverrides', $payload);
+            $this->assertSame($overrides, $payload['containerOverrides']);
+            $this->assertEquals(['jobId' => 5], $payload['parameters']);
+        });
+
+        $this->queue->push(new TestJobWithOverrides($overrides));
     }
 
     public function testGetJobById()
@@ -155,4 +172,16 @@ class BatchQueueTest extends TestCase
 class TestJob
 {
     //
+}
+
+class TestJobWithOverrides implements JobContainerOverrides
+{
+    public function __construct(private readonly array $overrides)
+    {
+    }
+
+    public function getBatchContainerOverrides(): ?array
+    {
+        return $this->overrides;
+    }
 }
