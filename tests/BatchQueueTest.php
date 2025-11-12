@@ -4,23 +4,36 @@ namespace LukeWaite\LaravelQueueAwsBatch\Tests;
 
 use Carbon\Carbon;
 use LukeWaite\LaravelQueueAwsBatch\Exceptions\UnsupportedException;
+use LukeWaite\LaravelQueueAwsBatch\Queues\BatchQueue;
 use Mockery\Adapter\Phpunit\MockeryTestCase as TestCase;
 use Mockery as m;
+use Mockery\MockInterface;
 
 class BatchQueueTest extends TestCase
 {
-    public function setUp(): void
+    protected MockInterface $database;
+
+    protected MockInterface $batch;
+
+    protected BatchQueue $queue;
+
+    protected function setUp(): void
     {
-        $this->queue = $this->getMockBuilder('LukeWaite\LaravelQueueAwsBatch\Queues\BatchQueue')->setMethods(null)->setConstructorArgs([
-            $this->database = m::mock('Illuminate\Database\Connection'),
+        parent::setUp();
+
+        $this->database = m::mock('Illuminate\Database\Connection');
+        $this->batch = m::mock('Aws\Batch\BatchClient');
+
+        $this->queue = new BatchQueue(
+            $this->database,
             'table',
             'default',
             '60',
             'jobdefinition',
-            $this->batch = m::mock('Aws\Batch\BatchClient'),
-        ])->getMock();
+            $this->batch,
+        );
 
-        $this->queue->setContainer(m::mock('Illuminate\Container\Container'));
+        $this->queue->setContainer(new \Illuminate\Container\Container());
     }
 
     public function testPushProperlyPushesJobOntoDatabase()
@@ -84,7 +97,7 @@ class BatchQueueTest extends TestCase
 
         $this->database->shouldReceive('commit')->once();
 
-        $this->queue->getJobById(1, 'default');
+        $this->queue->getJobById(1);
 
         Carbon::setTestNow();
     }

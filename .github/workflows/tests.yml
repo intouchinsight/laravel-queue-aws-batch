@@ -47,6 +47,8 @@ jobs:
           composer update --${{ matrix.dependency-version }} --prefer-dist --no-interaction
 
       - name: Execute tests
+        env:
+          XDEBUG_MODE: coverage
         run: vendor/bin/phpunit
 
       - name: PHPStan Static Analysis
@@ -97,7 +99,7 @@ jobs:
       - name: Find pint version
         id: find_pint_version
         run: |
-          PINT_VERSION='v1.13'
+          PINT_VERSION='v1.25.1'
           echo "Attempting to load pint version from composer.lock"
           if [ -f composer.lock ]; then
             PINT_VERSION=$(jq '.["packages-dev"][] | select(.name == "laravel/pint") | .version' composer.lock)

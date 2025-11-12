@@ -1,14 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" bootstrap="vendor/autoload.php" backupGlobals="false" backupStaticAttributes="false" colors="true" verbose="true" convertErrorsToExceptions="true" convertNoticesToExceptions="true" convertWarningsToExceptions="true" processIsolation="false" stopOnFailure="false" xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/9.3/phpunit.xsd">
-  <coverage processUncoveredFiles="true">
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" bootstrap="vendor/autoload.php" colors="true" xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/11.5/phpunit.xsd">
+  <coverage>
+    <report>
+      <clover outputFile="tests/reports/clover.xml"/>
+    </report>
+  </coverage>
+  <source>
     <include>
       <directory suffix=".php">src/</directory>
     </include>
-    <report>
-      <clover outputFile="tests/reports/clover.xml"/>
-      <text outputFile=""/>
-    </report>
-  </coverage>
+  </source>
   <testsuites>
     <testsuite name=":vendor Test Suite">
       <directory>tests</directory>

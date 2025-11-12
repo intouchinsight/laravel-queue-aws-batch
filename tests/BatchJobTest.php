@@ -3,27 +3,38 @@
 namespace LukeWaite\LaravelQueueAwsBatch\Tests;
 
 use LukeWaite\LaravelQueueAwsBatch\Exceptions\UnsupportedException;
+use LukeWaite\LaravelQueueAwsBatch\Jobs\BatchJob;
 use Mockery\Adapter\Phpunit\MockeryTestCase as TestCase;
 use Mockery as m;
+use Mockery\MockInterface;
 
 class BatchJobTest extends TestCase
 {
-    public function setUp(): void
+    protected \stdClass $job;
+
+    protected MockInterface $batchQueue;
+
+    protected BatchJob $batchJob;
+
+    protected function setUp(): void
     {
+        parent::setUp();
+
         $this->job = new \stdClass();
         $this->job->payload = '{"job":"foo","data":["data"]}';
         $this->job->id = 4;
         $this->job->queue = 'default';
         $this->job->attempts = 1;
 
-        /** @var \LukeWaite\LaravelQueueAwsBatch\Jobs\BatchJob $batchJob */
-        $this->batchJob = $this->getMockBuilder('LukeWaite\LaravelQueueAwsBatch\Jobs\BatchJob')->setMethods(null)->setConstructorArgs([
-            m::mock('Illuminate\Container\Container'),
-            $this->batchQueue = m::mock('LukeWaite\LaravelQueueAwsBatch\Queues\BatchQueue'),
+        $this->batchQueue = m::mock('LukeWaite\LaravelQueueAwsBatch\Queues\BatchQueue');
+
+        $this->batchJob = new BatchJob(
+            new \Illuminate\Container\Container(),
+            $this->batchQueue,
             $this->job,
             'testConnection',
             'defaultQueue',
-        ])->getMock();
+        );
     }
 
     public function testReleaseDoesntDeleteButDoesUpdate()
