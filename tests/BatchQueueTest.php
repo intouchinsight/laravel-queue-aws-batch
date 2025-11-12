@@ -3,27 +3,41 @@
 namespace LukeWaite\LaravelQueueAwsBatch\Tests;
 
 use Carbon\Carbon;
+use LukeWaite\LaravelQueueAwsBatch\Contracts\JobContainerOverrides;
 use LukeWaite\LaravelQueueAwsBatch\Exceptions\UnsupportedException;
+use LukeWaite\LaravelQueueAwsBatch\Queues\BatchQueue;
 use Mockery\Adapter\Phpunit\MockeryTestCase as TestCase;
 use Mockery as m;
+use Mockery\MockInterface;
 
 class BatchQueueTest extends TestCase
 {
-    public function setUp(): void
+    protected MockInterface $database;
+
+    protected MockInterface $batch;
+
+    protected BatchQueue $queue;
+
+    protected function setUp(): void
     {
-        $this->queue = $this->getMockBuilder('LukeWaite\LaravelQueueAwsBatch\Queues\BatchQueue')->setMethods(null)->setConstructorArgs([
-            $this->database = m::mock('Illuminate\Database\Connection'),
+        parent::setUp();
+
+        $this->database = m::mock('Illuminate\Database\Connection');
+        $this->batch = m::mock('Aws\Batch\BatchClient');
+
+        $this->queue = new BatchQueue(
+            $this->database,
             'table',
             'default',
             '60',
             'jobdefinition',
-            $this->batch = m::mock('Aws\Batch\BatchClient'),
-        ])->getMock();
+            $this->batch,
+        );
 
-        $this->queue->setContainer(m::mock('Illuminate\Container\Container'));
+        $this->queue->setContainer(new \Illuminate\Container\Container);
     }
 
-    public function testPushProperlyPushesJobOntoDatabase()
+    public function test_push_properly_pushes_job_onto_database()
     {
         $this->database->shouldReceive('table')->with('table')->andReturn($query = m::mock('StdClass'));
 
@@ -45,11 +59,11 @@ class BatchQueueTest extends TestCase
             $this->assertEquals(['jobId' => 100], $array['parameters']);
         });
 
-        $result = $this->queue->push(new TestJob());
+        $result = $this->queue->push(new TestJob);
         $this->assertEquals(100, $result);
     }
 
-    public function testPushProperlySanitizesJobName()
+    public function test_push_properly_sanitizes_job_name()
     {
         $this->database->shouldReceive('table')->with('table')->andReturn($query = m::mock('StdClass'));
 
@@ -62,10 +76,26 @@ class BatchQueueTest extends TestCase
             $this->assertEquals('LukeWaite_LaravelQueueAwsBatch_Tests_TestJob', $array['jobName']);
         });
 
-        $this->queue->push(new TestJob());
+        $this->queue->push(new TestJob);
     }
 
-    public function testGetJobById()
+    public function test_push_includes_container_overrides_when_job_supports_overrides()
+    {
+        $overrides = ['vcpus' => 2];
+
+        $this->database->shouldReceive('table')->with('table')->andReturn($query = m::mock('StdClass'));
+        $query->shouldReceive('insertGetId')->once()->andReturn(5);
+
+        $this->batch->shouldReceive('submitJob')->once()->andReturnUsing(function ($payload) use ($overrides) {
+            $this->assertArrayHasKey('containerOverrides', $payload);
+            $this->assertSame($overrides, $payload['containerOverrides']);
+            $this->assertEquals(['jobId' => 5], $payload['parameters']);
+        });
+
+        $this->queue->push(new TestJobWithOverrides($overrides));
+    }
+
+    public function test_get_job_by_id()
     {
         $testDate = Carbon::create(2016, 9, 4, 16);
         Carbon::setTestNow($testDate);
@@ -84,12 +114,12 @@ class BatchQueueTest extends TestCase
 
         $this->database->shouldReceive('commit')->once();
 
-        $this->queue->getJobById(1, 'default');
+        $this->queue->getJobById(1);
 
         Carbon::setTestNow();
     }
 
-    public function testRelease()
+    public function test_release()
     {
         $this->database->shouldReceive('table')->once()->with('table')->andReturn($table = m::mock('StdClass'));
         $table->shouldReceive('where')->once()->with('id', 4)->andReturn($query = m::mock('StdClass'));
@@ -98,7 +128,7 @@ class BatchQueueTest extends TestCase
             'reserved_at' => null,
         ])->andReturn(4);
 
-        $job = new \stdClass();
+        $job = new \stdClass;
         $job->payload = '{"job":"foo","data":["data"]}';
         $job->id = 4;
         $job->queue = 'default';
@@ -108,7 +138,7 @@ class BatchQueueTest extends TestCase
         $this->assertEquals(4, $result);
     }
 
-    public function testPopThrowsException()
+    public function test_pop_throws_exception()
     {
         $this->expectException(UnsupportedException::class);
         $this->expectExceptionMessage('The BatchQueue does not support running via a regular worker. Instead, you should use the queue:batch-work command with a job id.');
@@ -116,7 +146,7 @@ class BatchQueueTest extends TestCase
         $this->queue->pop('default');
     }
 
-    public function testLaterThrowsException()
+    public function test_later_throws_exception()
     {
         $this->expectException(UnsupportedException::class);
         $this->expectExceptionMessage('The BatchQueue does not support the later() operation.');
@@ -124,12 +154,12 @@ class BatchQueueTest extends TestCase
         $this->queue->later(10, 'default');
     }
 
-    public function testReleaseWithDelayThrowsException()
+    public function test_release_with_delay_throws_exception()
     {
         $this->expectException(UnsupportedException::class);
         $this->expectExceptionMessage('The BatchJob does not support releasing back onto the queue with a delay');
 
-        $job = new \stdClass();
+        $job = new \stdClass;
         $job->payload = '{"job":"foo","data":["data"]}';
         $job->id = 4;
         $job->queue = 'default';
@@ -142,4 +172,14 @@ class BatchQueueTest extends TestCase
 class TestJob
 {
     //
+}
+
+class TestJobWithOverrides implements JobContainerOverrides
+{
+    public function __construct(private readonly array $overrides) {}
+
+    public function getBatchContainerOverrides(): ?array
+    {
+        return $this->overrides;
+    }
 }

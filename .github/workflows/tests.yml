@@ -6,43 +6,49 @@ on:
       - main
       - '*.x'
   pull_request:
-  schedule:
-    - cron: '0 0 * * *'
 
-permissions:
-  contents: read
-
+# Laravel 12 temporarily limited to <12.38.0 due to https://github.com/orchestral/canvas/issues/47
 jobs:
   tests:
     runs-on: ubuntu-latest
-
     strategy:
       fail-fast: false
       matrix:
-        php: [ '7.3', '7.4', '8.0', '8.1', '8.2' ]
-        laravel: [^8]
+        php: [8.3, 8.4]
+        laravel: ["^11.44.7", "^12.0 <12.38.0"]
         dependency-version: [prefer-stable]
+        include:
+          - laravel: "^12.0 <12.38.0"
+            testbench: "10.6.*"
+          - laravel: "^11.44.7"
+            testbench: "9.15.*"
 
     name: PHP ${{ matrix.php }} - Laravel ${{ matrix.laravel }} - ${{ matrix.dependency-version }}
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 10
+        uses: actions/checkout@v4
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
+          extensions: curl, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, iconv
           coverage: xdebug
+
+      - name: Setup problem matchers
+        run: |
+          echo "::add-matcher::${{ runner.tool_cache }}/php.json"
+          echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
 
       - name: Install dependencies
         run: |
-          composer require "laravel/framework:${{ matrix.laravel }}" --no-interaction --no-update
-          composer update --${{ matrix.dependency-version }} --prefer-dist --no-progress
+          composer require "laravel/framework:${{ matrix.laravel }}" "orchestra/testbench:${{ matrix.testbench }}" --no-interaction --no-update
+          composer update --${{ matrix.dependency-version }} --prefer-dist --no-interaction
 
       - name: Execute tests
+        env:
+          XDEBUG_MODE: coverage
         run: vendor/bin/phpunit
 
       - name: PHPStan Static Analysis
@@ -50,11 +56,64 @@ jobs:
         with:
           path: src/
 
-      - name: Upload Scrutinizer coverage
-        uses: sudo-bot/action-scrutinizer@latest
+  phpcs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
         with:
-          cli-args: "--format=php-clover tests/reports/clover.xml --revision=${{ github.event.pull_request.head.sha || github.sha }}"
+          php-version: 8.4
+          tools: cs2pr, phpcs
+
+      - name: Setup phpcs config
+        run: |
+          {
+            echo '<?xml version="1.0"?>'
+            echo '<ruleset name="DD Detection Standard">'
+            echo '<description>Detects and fails for dd found in code.</description>'
+            echo '<arg name="colors"/>'
+            echo '<arg value="n"/>'
+            echo '<rule ref="Generic.PHP.ForbiddenFunctions">'
+            echo '<properties>'
+            echo '<property name="forbiddenFunctions" type="array">'
+            echo '<element key="dd" value="null"/>'
+            echo '</property>'
+            echo '</properties>'
+            echo '</rule>'
+            echo '</ruleset>'
+          } > custom_phpcs_style.xml
+        
+      - name: Run PHP CS Fixer
+        run: |
+          (phpcs --standard=custom_phpcs_style.xml --report=checkstyle src | cs2pr) || true
+          phpcs --standard=custom_phpcs_style.xml src
   pint:
-    uses: intouchinsight/github-workflows/.github/workflows/laravel-pint.yml@main
-    with:
-      php_version: '8.3'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Find pint version
+        id: find_pint_version
+        run: |
+          PINT_VERSION='v1.25.1'
+          echo "Attempting to load pint version from composer.lock"
+          if [ -f composer.lock ]; then
+            PINT_VERSION=$(jq '.["packages-dev"][] | select(.name == "laravel/pint") | .version' composer.lock)
+          fi
+          echo "Found pint version: $PINT_VERSION"
+          echo "PINT_VERSION=$PINT_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.4
+          tools: cs2pr, pint:${{ steps.find_pint_version.outputs.PINT_VERSION }}
+  
+      - name: Run pint 
+        run: |
+          (pint --test --format=checkstyle | cs2pr) || true
+          pint --test -v --ansi

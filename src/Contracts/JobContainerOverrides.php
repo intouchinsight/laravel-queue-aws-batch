@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Laravel Queue for AWS Batch.
  *
@@ -32,7 +33,6 @@ namespace LukeWaite\LaravelQueueAwsBatch\Contracts;
  * ]
  *
  * Interface JobContainerOverrides
- * @package LukeWaite\LaravelQueueAwsBatch\Contracts
  */
 interface JobContainerOverrides
 {

@@ -49,7 +49,7 @@ class BatchQueue extends DatabaseQueue
     {
         $payload = $this->createPayload($job, $data);
 
-        return $this->pushToBatch($queue, $payload, $this->getBatchDisplayName($job));
+        return $this->pushToBatch($queue, $payload, $this->getBatchDisplayName($job), $job);
     }
 
     public function pushRaw($payload, $queue = null, array $options = [])
@@ -79,9 +79,10 @@ class BatchQueue extends DatabaseQueue
      * @param  string|null  $queue
      * @param  array  $payload
      * @param  string  $jobName
+     * @param  mixed  $job
      * @return int
      */
-    protected function pushToBatch($queue, $payload, $jobName)
+    protected function pushToBatch($queue, $payload, $jobName, $job = null)
     {
         $jobId = $this->pushToDatabase($queue, $payload);
 
@@ -91,7 +92,7 @@ class BatchQueue extends DatabaseQueue
             'jobQueue' => $this->getQueue($queue),
             'parameters' => [
                 'jobId' => $jobId,
-            ]
+            ],
         ];
 
         if (isset($job) && is_object($job) && $this->implementsJobContainerOverrides($job)) {

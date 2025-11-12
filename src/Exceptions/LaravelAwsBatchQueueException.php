@@ -12,6 +12,4 @@
 
 namespace LukeWaite\LaravelQueueAwsBatch\Exceptions;
 
-class LaravelAwsBatchQueueException extends \Exception
-{
-}
+class LaravelAwsBatchQueueException extends \Exception {}
