@@ -78,8 +78,8 @@ class BatchQueue extends DatabaseQueue
      *
      * @param  string|null  $queue
      * @param  array  $payload
-    * @param  string  $jobName
-    * @param  mixed  $job
+     * @param  string  $jobName
+     * @param  mixed  $job
      * @return int
      */
     protected function pushToBatch($queue, $payload, $jobName, $job = null)
@@ -92,10 +92,10 @@ class BatchQueue extends DatabaseQueue
             'jobQueue' => $this->getQueue($queue),
             'parameters' => [
                 'jobId' => $jobId,
-            ]
+            ],
         ];
 
-    if (isset($job) && is_object($job) && $this->implementsJobContainerOverrides($job)) {
+        if (isset($job) && is_object($job) && $this->implementsJobContainerOverrides($job)) {
             /** @var JobContainerOverrides $job */
             $overrides = $job->getBatchContainerOverrides();
 

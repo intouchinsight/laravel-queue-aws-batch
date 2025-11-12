@@ -12,6 +12,4 @@
 
 namespace LukeWaite\LaravelQueueAwsBatch\Exceptions;
 
-class UnsupportedException extends LaravelAwsBatchQueueException
-{
-}
+class UnsupportedException extends LaravelAwsBatchQueueException {}

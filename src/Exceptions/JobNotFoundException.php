@@ -12,6 +12,4 @@
 
 namespace LukeWaite\LaravelQueueAwsBatch\Exceptions;
 
-class JobNotFoundException extends LaravelAwsBatchQueueException
-{
-}
+class JobNotFoundException extends LaravelAwsBatchQueueException {}

@@ -34,10 +34,10 @@ class BatchQueueTest extends TestCase
             $this->batch,
         );
 
-        $this->queue->setContainer(new \Illuminate\Container\Container());
+        $this->queue->setContainer(new \Illuminate\Container\Container);
     }
 
-    public function testPushProperlyPushesJobOntoDatabase()
+    public function test_push_properly_pushes_job_onto_database()
     {
         $this->database->shouldReceive('table')->with('table')->andReturn($query = m::mock('StdClass'));
 
@@ -59,11 +59,11 @@ class BatchQueueTest extends TestCase
             $this->assertEquals(['jobId' => 100], $array['parameters']);
         });
 
-        $result = $this->queue->push(new TestJob());
+        $result = $this->queue->push(new TestJob);
         $this->assertEquals(100, $result);
     }
 
-    public function testPushProperlySanitizesJobName()
+    public function test_push_properly_sanitizes_job_name()
     {
         $this->database->shouldReceive('table')->with('table')->andReturn($query = m::mock('StdClass'));
 
@@ -76,10 +76,10 @@ class BatchQueueTest extends TestCase
             $this->assertEquals('LukeWaite_LaravelQueueAwsBatch_Tests_TestJob', $array['jobName']);
         });
 
-        $this->queue->push(new TestJob());
+        $this->queue->push(new TestJob);
     }
 
-    public function testPushIncludesContainerOverridesWhenJobSupportsOverrides()
+    public function test_push_includes_container_overrides_when_job_supports_overrides()
     {
         $overrides = ['vcpus' => 2];
 
@@ -95,7 +95,7 @@ class BatchQueueTest extends TestCase
         $this->queue->push(new TestJobWithOverrides($overrides));
     }
 
-    public function testGetJobById()
+    public function test_get_job_by_id()
     {
         $testDate = Carbon::create(2016, 9, 4, 16);
         Carbon::setTestNow($testDate);
@@ -119,7 +119,7 @@ class BatchQueueTest extends TestCase
         Carbon::setTestNow();
     }
 
-    public function testRelease()
+    public function test_release()
     {
         $this->database->shouldReceive('table')->once()->with('table')->andReturn($table = m::mock('StdClass'));
         $table->shouldReceive('where')->once()->with('id', 4)->andReturn($query = m::mock('StdClass'));
@@ -128,7 +128,7 @@ class BatchQueueTest extends TestCase
             'reserved_at' => null,
         ])->andReturn(4);
 
-        $job = new \stdClass();
+        $job = new \stdClass;
         $job->payload = '{"job":"foo","data":["data"]}';
         $job->id = 4;
         $job->queue = 'default';
@@ -138,7 +138,7 @@ class BatchQueueTest extends TestCase
         $this->assertEquals(4, $result);
     }
 
-    public function testPopThrowsException()
+    public function test_pop_throws_exception()
     {
         $this->expectException(UnsupportedException::class);
         $this->expectExceptionMessage('The BatchQueue does not support running via a regular worker. Instead, you should use the queue:batch-work command with a job id.');
@@ -146,7 +146,7 @@ class BatchQueueTest extends TestCase
         $this->queue->pop('default');
     }
 
-    public function testLaterThrowsException()
+    public function test_later_throws_exception()
     {
         $this->expectException(UnsupportedException::class);
         $this->expectExceptionMessage('The BatchQueue does not support the later() operation.');
@@ -154,12 +154,12 @@ class BatchQueueTest extends TestCase
         $this->queue->later(10, 'default');
     }
 
-    public function testReleaseWithDelayThrowsException()
+    public function test_release_with_delay_throws_exception()
     {
         $this->expectException(UnsupportedException::class);
         $this->expectExceptionMessage('The BatchJob does not support releasing back onto the queue with a delay');
 
-        $job = new \stdClass();
+        $job = new \stdClass;
         $job->payload = '{"job":"foo","data":["data"]}';
         $job->id = 4;
         $job->queue = 'default';
@@ -176,9 +176,7 @@ class TestJob
 
 class TestJobWithOverrides implements JobContainerOverrides
 {
-    public function __construct(private readonly array $overrides)
-    {
-    }
+    public function __construct(private readonly array $overrides) {}
 
     public function getBatchContainerOverrides(): ?array
     {

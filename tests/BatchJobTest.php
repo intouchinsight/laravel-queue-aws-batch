@@ -20,7 +20,7 @@ class BatchJobTest extends TestCase
     {
         parent::setUp();
 
-        $this->job = new \stdClass();
+        $this->job = new \stdClass;
         $this->job->payload = '{"job":"foo","data":["data"]}';
         $this->job->id = 4;
         $this->job->queue = 'default';
@@ -29,7 +29,7 @@ class BatchJobTest extends TestCase
         $this->batchQueue = m::mock('LukeWaite\LaravelQueueAwsBatch\Queues\BatchQueue');
 
         $this->batchJob = new BatchJob(
-            new \Illuminate\Container\Container(),
+            new \Illuminate\Container\Container,
             $this->batchQueue,
             $this->job,
             'testConnection',
@@ -37,7 +37,7 @@ class BatchJobTest extends TestCase
         );
     }
 
-    public function testReleaseDoesntDeleteButDoesUpdate()
+    public function test_release_doesnt_delete_but_does_update()
     {
         $this->batchQueue->shouldReceive('release')->once();
         $this->batchQueue->shouldNotReceive('deleteReserved');
@@ -45,7 +45,7 @@ class BatchJobTest extends TestCase
         $this->batchJob->release(0);
     }
 
-    public function testThrowsExceptionOnReleaseWIthDelay()
+    public function test_throws_exception_on_release_w_ith_delay()
     {
         $this->expectException(UnsupportedException::class);
         $this->expectExceptionMessage('The BatchJob does not support releasing back onto the queue with a delay');
