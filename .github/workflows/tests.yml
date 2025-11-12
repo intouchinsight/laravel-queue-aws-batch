@@ -92,8 +92,8 @@ jobs:
         
       - name: Run PHP CS Fixer
         run: |
-          (phpcs --standard=custom_phpcs_style.xml --report=checkstyle ${{ inputs.dir }} | cs2pr) || true
-          phpcs --standard=custom_phpcs_style.xml ${{ inputs.dir }}
+          (phpcs --standard=custom_phpcs_style.xml --report=checkstyle src | cs2pr) || true
+          phpcs --standard=custom_phpcs_style.xml src
   pint:
     runs-on: ubuntu-latest
     steps:
