@@ -7,7 +7,7 @@ on:
       - '*.x'
   pull_request:
 
-
+# Laravel 12 temporarily limited to <12.38.0 due to https://github.com/orchestral/canvas/issues/47
 jobs:
   tests:
     runs-on: ubuntu-latest
@@ -15,10 +15,10 @@ jobs:
       fail-fast: false
       matrix:
         php: [8.3, 8.4]
-        laravel: ['^11.44.7', '^12.24.0']
+        laravel: ["^11.44.7", "^12.0 <12.38.0"]
         dependency-version: [prefer-stable]
         include:
-          - laravel: "^12.24.0"
+          - laravel: "^12.0 <12.38.0"
             testbench: "10.6.*"
           - laravel: "^11.44.7"
             testbench: "9.15.*"
