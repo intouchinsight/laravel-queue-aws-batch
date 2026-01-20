@@ -57,15 +57,25 @@ class QueueWorkBatchCommand extends Command
 
     public function handle()
     {
-        $this->laravel['events']->listen(JobFailed::class, function ($event) {
+        $reportedAsFailed = 0;
+
+        $this->laravel['events']->listen(JobFailed::class, function ($event) use (&$reportedAsFailed) {
             $this->logFailedJob($event);
+            $reportedAsFailed = 1;
         });
 
         try {
             $this->runJob();
         } catch (\Throwable $e) {
-            $this->exceptions->report($e);
-            throw $e;
+            // Raise the exception when the caught error has not been handled by the queue failed
+            // and logged as a failed job. When this has been logged as a failed job, exit 0 so that Batch
+            // will stop trying to attempt to run the job.
+            if ($reportedAsFailed === 0) {
+                throw $e;
+            } else {
+                // If we are not re-throwing, which will report, we need to report.
+                $this->exceptions->report($e);
+            }
         }
     }
 
