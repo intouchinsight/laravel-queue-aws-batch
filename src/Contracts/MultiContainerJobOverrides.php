@@ -48,9 +48,9 @@ namespace LukeWaite\LaravelQueueAwsBatch\Contracts;
  *   ]
  * ]
  *
- * Interface JobEcsPropertiesOverride
+ * Interface MultiContainerJobOverrides
  */
-interface JobEcsPropertiesOverride
+interface MultiContainerJobOverrides
 {
     public function getBatchEcsPropertiesOverride(): ?array;
 }

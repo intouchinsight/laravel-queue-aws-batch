@@ -17,7 +17,7 @@ use Illuminate\Database\Connection;
 use Illuminate\Queue\DatabaseQueue;
 use Illuminate\Queue\Jobs\DatabaseJobRecord;
 use LukeWaite\LaravelQueueAwsBatch\Contracts\JobContainerOverrides;
-use LukeWaite\LaravelQueueAwsBatch\Contracts\JobEcsPropertiesOverride;
+use LukeWaite\LaravelQueueAwsBatch\Contracts\MultiContainerJobOverrides;
 use LukeWaite\LaravelQueueAwsBatch\Exceptions\JobNotFoundException;
 use LukeWaite\LaravelQueueAwsBatch\Exceptions\UnsupportedException;
 use LukeWaite\LaravelQueueAwsBatch\Jobs\BatchJob;
@@ -97,20 +97,14 @@ class BatchQueue extends DatabaseQueue
         ];
 
         if (isset($job) && is_object($job)) {
-            if ($job instanceof JobEcsPropertiesOverride) {
-                /** @var JobEcsPropertiesOverride $job */
-                $overrides = $job->getBatchEcsPropertiesOverride();
+            [$key, $overrides] = match (true) {
+                $job instanceof MultiContainerJobOverrides => ['ecsPropertiesOverride', $job->getBatchEcsPropertiesOverride()],
+                $job instanceof JobContainerOverrides => ['containerOverrides', $job->getBatchContainerOverrides()],
+                default => [null, null],
+            };
 
-                if (isset($overrides)) {
-                    $payload['ecsPropertiesOverride'] = $overrides;
-                }
-            } elseif ($job instanceof JobContainerOverrides) {
-                /** @var JobContainerOverrides $job */
-                $overrides = $job->getBatchContainerOverrides();
-
-                if (isset($overrides)) {
-                    $payload['containerOverrides'] = $overrides;
-                }
+            if ($key !== null && isset($overrides)) {
+                $payload[$key] = $overrides;
             }
         }
 

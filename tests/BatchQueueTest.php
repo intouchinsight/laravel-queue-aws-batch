@@ -4,7 +4,7 @@ namespace LukeWaite\LaravelQueueAwsBatch\Tests;
 
 use Carbon\Carbon;
 use LukeWaite\LaravelQueueAwsBatch\Contracts\JobContainerOverrides;
-use LukeWaite\LaravelQueueAwsBatch\Contracts\JobEcsPropertiesOverride;
+use LukeWaite\LaravelQueueAwsBatch\Contracts\MultiContainerJobOverrides;
 use LukeWaite\LaravelQueueAwsBatch\Exceptions\UnsupportedException;
 use LukeWaite\LaravelQueueAwsBatch\Queues\BatchQueue;
 use Mockery\Adapter\Phpunit\MockeryTestCase as TestCase;
@@ -239,7 +239,7 @@ class TestJobWithOverrides implements JobContainerOverrides
     }
 }
 
-class TestFargateJobWithOverrides implements JobEcsPropertiesOverride
+class TestFargateJobWithOverrides implements MultiContainerJobOverrides
 {
     public function __construct(private readonly array $overrides) {}
 
@@ -249,7 +249,7 @@ class TestFargateJobWithOverrides implements JobEcsPropertiesOverride
     }
 }
 
-class TestJobWithBothOverrides implements JobContainerOverrides, JobEcsPropertiesOverride
+class TestJobWithBothOverrides implements JobContainerOverrides, MultiContainerJobOverrides
 {
     public function __construct(private readonly array $ecsOverrides) {}
 
