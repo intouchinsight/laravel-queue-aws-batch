@@ -21,7 +21,6 @@ jobs:
             testbench: "10.11.*"
           - laravel: "^11.50.0"
             testbench: "9.17.*"
-            no_audit: true
 
     name: PHP ${{ matrix.php }} - Laravel ${{ matrix.laravel }} - ${{ matrix.dependency-version }}
 
@@ -44,7 +43,7 @@ jobs:
       - name: Install dependencies
         run: |
           composer require "laravel/framework:${{ matrix.laravel }}" "orchestra/testbench:${{ matrix.testbench }}" --no-interaction --no-update
-          composer update --${{ matrix.dependency-version }} --prefer-dist --no-interaction ${{ matrix.no_audit == true && '--no-audit' || '' }}
+          composer update --${{ matrix.dependency-version }} --prefer-dist --no-interaction
 
       - name: Execute tests
         env:

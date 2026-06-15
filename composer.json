@@ -39,6 +39,11 @@
     "fix-style": "phpcbf -p --standard=psr12 src/",
     "phpstan": "phpstan analyse"
   },
+  "config": {
+    "audit": {
+      "ignore": ["PKSA-mdq4-51ck-6kdq"]
+    }
+  },
   "extra": {
     "laravel": {
       "providers": [
