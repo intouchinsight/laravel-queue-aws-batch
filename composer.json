@@ -20,17 +20,17 @@
   },
   "require": {
     "php": "^8.3|^8.4",
-    "illuminate/support": "^11.50.0|^12.61.1",
+    "illuminate/support": "^12.61.1",
     "aws/aws-sdk-php": "^3.20.6"
   },
   "require-dev": {
     "mockery/mockery": "^1.5",
-    "laravel/framework": "^11.50.0|^12.61.1",
+    "laravel/framework": "^12.61.1",
     "phpunit/phpunit": "^10.0|^11.0",
     "squizlabs/php_codesniffer": "^3.5",
     "phpstan/phpstan": "^2.1",
     "larastan/larastan": "^3.0",
-    "orchestra/testbench": "^9.17|^10.11",
+    "orchestra/testbench": "^10.11",
     "laravel/pint": "^1.25.1"
   },
   "scripts": {
@@ -38,11 +38,6 @@
     "check-style": "phpcs -p --standard=psr12 src/",
     "fix-style": "phpcbf -p --standard=psr12 src/",
     "phpstan": "phpstan analyse"
-  },
-  "config": {
-    "audit": {
-      "ignore": ["PKSA-mdq4-51ck-6kdq"]
-    }
   },
   "extra": {
     "laravel": {
