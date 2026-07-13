@@ -4,6 +4,7 @@ namespace LukeWaite\LaravelQueueAwsBatch\Tests;
 
 use Carbon\Carbon;
 use LukeWaite\LaravelQueueAwsBatch\Contracts\JobContainerOverrides;
+use LukeWaite\LaravelQueueAwsBatch\Contracts\MultiContainerJobOverrides;
 use LukeWaite\LaravelQueueAwsBatch\Exceptions\UnsupportedException;
 use LukeWaite\LaravelQueueAwsBatch\Queues\BatchQueue;
 use Mockery\Adapter\Phpunit\MockeryTestCase as TestCase;
@@ -88,11 +89,65 @@ class BatchQueueTest extends TestCase
 
         $this->batch->shouldReceive('submitJob')->once()->andReturnUsing(function ($payload) use ($overrides) {
             $this->assertArrayHasKey('containerOverrides', $payload);
+            $this->assertArrayNotHasKey('ecsPropertiesOverride', $payload);
             $this->assertSame($overrides, $payload['containerOverrides']);
             $this->assertEquals(['jobId' => 5], $payload['parameters']);
         });
 
         $this->queue->push(new TestJobWithOverrides($overrides));
+    }
+
+    public function test_push_includes_ecs_properties_override_when_job_supports_fargate()
+    {
+        $overrides = [
+            'taskProperties' => [
+                [
+                    'containers' => [
+                        [
+                            'name' => 'main',
+                            'resourceRequirements' => [
+                                ['type' => 'VCPU', 'value' => '2'],
+                                ['type' => 'MEMORY', 'value' => '4096'],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $this->database->shouldReceive('table')->with('table')->andReturn($query = m::mock('StdClass'));
+        $query->shouldReceive('insertGetId')->once()->andReturn(7);
+
+        $this->batch->shouldReceive('submitJob')->once()->andReturnUsing(function ($payload) use ($overrides) {
+            $this->assertArrayHasKey('ecsPropertiesOverride', $payload);
+            $this->assertArrayNotHasKey('containerOverrides', $payload);
+            $this->assertSame($overrides, $payload['ecsPropertiesOverride']);
+            $this->assertEquals(['jobId' => 7], $payload['parameters']);
+        });
+
+        $this->queue->push(new TestFargateJobWithOverrides($overrides));
+    }
+
+    public function test_push_ecs_override_takes_precedence_over_container_overrides()
+    {
+        $ecsOverrides = [
+            'taskProperties' => [
+                [
+                    'containers' => [['name' => 'main']],
+                ],
+            ],
+        ];
+
+        $this->database->shouldReceive('table')->with('table')->andReturn($query = m::mock('StdClass'));
+        $query->shouldReceive('insertGetId')->once()->andReturn(9);
+
+        $this->batch->shouldReceive('submitJob')->once()->andReturnUsing(function ($payload) use ($ecsOverrides) {
+            $this->assertArrayHasKey('ecsPropertiesOverride', $payload);
+            $this->assertArrayNotHasKey('containerOverrides', $payload);
+            $this->assertSame($ecsOverrides, $payload['ecsPropertiesOverride']);
+        });
+
+        $this->queue->push(new TestJobWithBothOverrides($ecsOverrides));
     }
 
     public function test_get_job_by_id()
@@ -181,5 +236,30 @@ class TestJobWithOverrides implements JobContainerOverrides
     public function getBatchContainerOverrides(): ?array
     {
         return $this->overrides;
+    }
+}
+
+class TestFargateJobWithOverrides implements MultiContainerJobOverrides
+{
+    public function __construct(private readonly array $overrides) {}
+
+    public function getBatchEcsPropertiesOverride(): ?array
+    {
+        return $this->overrides;
+    }
+}
+
+class TestJobWithBothOverrides implements JobContainerOverrides, MultiContainerJobOverrides
+{
+    public function __construct(private readonly array $ecsOverrides) {}
+
+    public function getBatchContainerOverrides(): ?array
+    {
+        return ['vcpus' => 1];
+    }
+
+    public function getBatchEcsPropertiesOverride(): ?array
+    {
+        return $this->ecsOverrides;
     }
 }
