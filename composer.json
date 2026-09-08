@@ -20,17 +20,17 @@
   },
   "require": {
     "php": "^8.3|^8.4",
-    "illuminate/support": "^12.61.1",
+    "illuminate/support": "^12.61.1|^13.0",
     "aws/aws-sdk-php": "^3.371.4"
   },
   "require-dev": {
     "mockery/mockery": "^1.5",
-    "laravel/framework": "^12.61.1",
-    "phpunit/phpunit": "^11.5.50",
+    "laravel/framework": "^12.61.1|^13.0",
+    "phpunit/phpunit": "^11.5.50|^12.0",
     "squizlabs/php_codesniffer": "^3.5",
     "phpstan/phpstan": "^2.1",
     "larastan/larastan": "^3.0",
-    "orchestra/testbench": "^10.11",
+    "orchestra/testbench": "^10.11|^11.0",
     "laravel/pint": "^1.25.1"
   },
   "scripts": {
